@@ -18,9 +18,18 @@ router = APIRouter()
 def login_admin(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
+    print(f"DEBUG_AUTH: Admin Login Attempt - Email: '{form_data.username}', Pass length: {len(form_data.password)}")
     admin = db.query(QuanTri).filter(QuanTri.email == form_data.username).first()
-    if not admin or not security.verify_password(form_data.password, admin.mat_khau):
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    
+    if not admin:
+        print(f"DEBUG_AUTH: Admin not found for email: {form_data.username}")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+        
+    if not security.verify_password(form_data.password, admin.mat_khau):
+        print(f"DEBUG_AUTH: Password mismatch for admin: {form_data.username}")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    
+    print(f"DEBUG_AUTH: Admin Login SUCCESS: {admin.ma_qt}")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
